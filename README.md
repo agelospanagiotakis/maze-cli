@@ -42,19 +42,35 @@ level.
 The whole program is one bash script, so "distributing" it is mostly a matter
 of putting the file somewhere on `PATH` under the name `maze`.
 
-**1. Straight from the source tree** — no build step at all:
+**1. Straight from GitHub** — nothing to build, no clone:
+
+```sh
+mkdir -p ~/.local/bin
+curl -fsSL https://raw.githubusercontent.com/agelospanagiotakis/maze-cli/main/maze.sh \
+    -o ~/.local/bin/maze
+chmod +x ~/.local/bin/maze
+maze                                   # ~/.local/bin must be on your PATH
+```
+
+`curl -fsSL` fails loudly on HTTP errors rather than saving an error page, so a
+bad download cannot quietly become a broken `maze`. Prefer a pinned, verifiable
+download? Use the release tarball (option 3) and check its SHA256.
+
+**2. Straight from the source tree** — no build step at all:
 
 ```sh
 sudo install -Dm755 maze.sh /usr/local/bin/maze   # or: install -Dm755 maze.sh ~/.local/bin/maze
 maze
 ```
 
-**2. From the release tarball** (includes `LICENSE`, tests and the Makefile):
+**3. From the release tarball** (includes `LICENSE`, tests and the Makefile):
 
 ```sh
+# Either build it yourself:
 make dist                                  # builds build/maze-1.0.0.tar.gz + .sha256
 ( cd build && sha256sum -c maze-1.0.0.tar.gz.sha256 )   # maze-1.0.0.tar.gz: OK
-tar -xzf build/maze-1.0.0.tar.gz && cd maze-1.0.0
+# ...or download it from the releases page, then:
+tar -xzf maze-1.0.0.tar.gz && cd maze-1.0.0
 make test                                  # 58 checks
 sudo make install                          # PREFIX=/usr/local by default
 make uninstall                             # PREFIX=$HOME/.local also works
@@ -63,7 +79,7 @@ make uninstall                             # PREFIX=$HOME/.local also works
 `DESTDIR` is honoured for staged installs, so packagers can do
 `make install DESTDIR=$pkgdir PREFIX=/usr`.
 
-**3. As a Debian/Ubuntu package:**
+**4. As a Debian/Ubuntu package:**
 
 ```sh
 sudo apt-get install -y make dpkg-dev      # once

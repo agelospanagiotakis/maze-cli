@@ -128,9 +128,21 @@ your version the same way. The script itself is the source, so a copy of
 
 `make check-linux` runs the whole flow above inside `debian:stable-slim` using
 Docker — building the tarball, verifying its checksum, testing the unpacked
-release, installing and uninstalling it, then building, installing and removing
-the `.deb`. It is the quickest way to confirm a change still packages cleanly
-for Linux.
+release, installing and uninstalling it, building the Debian source and binary
+packages, running lintian, `uscan` and autopkgtest, and installing the package
+from a local apt repository with `apt-get`.
+
+To run every check in one go — syntax, version consistency, the test suite and
+the packaging gate — use the single entry point:
+
+```sh
+./LINUX_DISTRIBUTION_CHECKS.sh            # everything, needs Docker
+./LINUX_DISTRIBUTION_CHECKS.sh --quick    # skip the Docker half
+```
+
+It exits 0 when everything passed, 1 when something failed and 2 when the
+packaging checks could not run at all (Docker missing), so a green result can
+never be mistaken for an incomplete one. Logs land in `build/logs/`.
 
 ## Controls
 

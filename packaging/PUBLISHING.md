@@ -157,7 +157,7 @@ dch -v 1.1.0-1 "New upstream release."
 make check
 
 # 3. full verification, including the Debian packaging path
-make test && make check-linux
+./LINUX_DISTRIBUTION_CHECKS.sh      # runs: make check, make test, make check-linux
 make deb && make lint
 
 # 4. tag and publish the release with the tarball and checksum

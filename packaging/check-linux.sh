@@ -74,8 +74,11 @@ ls -l /tmp/stage/usr/bin/maze /tmp/stage/usr/share/man/man1/maze.1
 echo "usage line: $(/tmp/stage/usr/bin/maze --help | sed -n '3p')"
 
 SOLUTION=$(/tmp/stage/usr/bin/maze --print-solution --seed 5 --ascii --no-color)
-printf '%sq' "$SOLUTION" | /tmp/stage/usr/bin/maze --ascii --no-color --seed 5 \
-    | strip_ansi | grep -o 'Level 1 cleared in [0-9]* moves' | head -1
+# Capture the whole run before grepping: piping the game straight into
+# `grep -m1 ... | head -1` can close the pipe early and kill the game with
+# SIGPIPE, which `set -o pipefail` would then report as a spurious failure.
+PLAYED=$(printf '%sq' "$SOLUTION" | /tmp/stage/usr/bin/maze --ascii --no-color --seed 5)
+printf '%s\n' "$(printf '%s' "$PLAYED" | strip_ansi | grep -o 'Level 1 cleared in [0-9]* moves' | head -1)"
 make uninstall DESTDIR=/tmp/stage PREFIX=/usr >/dev/null
 if [[ -e /tmp/stage/usr/bin/maze || -e /tmp/stage/usr/share/man/man1/maze.1 ]]; then
     echo "FAIL: uninstall left files behind" >&2
@@ -125,8 +128,8 @@ echo "installed at: $MAZE"
 ls -l "$MAZE"
 "$MAZE" --version | head -1
 SOLUTION=$("$MAZE" --print-solution --seed 5 --ascii --no-color)
-printf '%sq' "$SOLUTION" | "$MAZE" --ascii --no-color --seed 5 \
-    | strip_ansi | grep -o 'Level 1 cleared in [0-9]* moves' | head -1
+PLAYED=$(printf '%sq' "$SOLUTION" | "$MAZE" --ascii --no-color --seed 5)
+printf '%s\n' "$(printf '%s' "$PLAYED" | strip_ansi | grep -o 'Level 1 cleared in [0-9]* moves' | head -1)"
 # /usr/games is on the default login PATH, so a plain `maze` must work for users.
 echo "PATH for a login shell: $(env -i bash -lc 'echo $PATH')"
 echo "files shipped by the package:"

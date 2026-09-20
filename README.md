@@ -82,12 +82,22 @@ make uninstall                             # PREFIX=$HOME/.local also works
 **4. As a Debian/Ubuntu package:**
 
 ```sh
-sudo apt-get install -y make dpkg-dev      # once
-make deb                                   # builds build/maze-1.0.0.deb
-sudo dpkg -i build/maze-1.0.0.deb
-maze
-sudo dpkg -r maze
+sudo apt-get install -y build-essential debhelper devscripts lintian
+make deb                                   # .deb + Debian source package (.dsc)
+make lint                                  # lintian --pedantic
+sudo apt-get install -y ./build/pkg/maze_1.0.0-1_all.deb
 ```
+
+The package installs into `/usr/games` with a section 6 manual page, following
+the Debian convention for games; `/usr/games` is on the default login `PATH`.
+`debian/` is a complete, lintian-clean source package, so the same tree can be
+uploaded to a PPA or to Debian itself.
+
+**Publishing it for `apt-get` users** — your own apt repository, an Ubuntu PPA,
+or getting into Debian proper — is covered step by step in
+[`packaging/PUBLISHING.md`](packaging/PUBLISHING.md), including what each route
+costs in time and review. `make check-linux` proves the whole packaging path in
+a container: build, lintian, a local apt repo, and `apt-get install maze`.
 
 For RPM and other formats, point [nfpm](https://nfpm.goreleaser.com/) at the
 same file — a starting point:

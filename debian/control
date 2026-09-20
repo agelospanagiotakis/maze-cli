@@ -1,0 +1,27 @@
+Source: maze
+Section: games
+Priority: optional
+Maintainer: Angelos Panagiotakis <agelospanagiotakis@gmail.com>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+Homepage: https://github.com/agelospanagiotakis/maze-cli
+Vcs-Git: https://github.com/agelospanagiotakis/maze-cli.git
+Vcs-Browser: https://github.com/agelospanagiotakis/maze-cli
+
+Package: maze
+Architecture: all
+Depends: ${misc:Depends}, bash (>= 3.2)
+Description: simple auto-generated maze game for the terminal
+ maze generates a perfect maze, draws it with box-drawing characters and
+ lets you walk a player from the top-left corner to the exit with the arrow
+ keys or WASD. Boards start small and grow by one cell in each direction for
+ every level cleared.
+ .
+ It uses a recursive backtracker, so there is exactly one route to the exit,
+ which is always reachable. Fog of war, a hint path and a status line with
+ moves, elapsed time, best run and a compass to the exit are built in.
+ .
+ The game is a single bash script requiring only bash, stty and optionally
+ tput. It restores the terminal settings before exiting, including after a
+ signal.

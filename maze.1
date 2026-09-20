@@ -1,0 +1,194 @@
+.\" Copyright (C) 2026 Angelos Panagiotakis
+.\" SPDX-License-Identifier: GPL-3.0-or-later
+.TH MAZE 6 "September 2026" "maze 1.0.0" "Games"
+.SH NAME
+maze \- simple auto-generated maze game for the terminal
+.SH SYNOPSIS
+.B maze
+.RI [ options ]
+.SH DESCRIPTION
+.B maze
+generates a maze, draws it with box-drawing characters and lets you walk a
+player from the top-left corner to the exit in the bottom-right corner using
+the arrow keys or the WASD keys.
+.PP
+Each maze is produced by an iterative recursive backtracker, so it is a
+.I perfect
+maze: there is exactly one route from the start to the exit, the exit is always
+reachable, and there are no loops.
+.PP
+The board starts small (a 9\(mu6 grid of cells) and grows by one cell in each
+direction for every level you clear. A status line shows the current level and
+board size, the number of moves, the elapsed time, your best run in the session
+and a compass pointing towards the exit. Walking into a wall costs nothing;
+only moves into an open cell are counted.
+.PP
+The game is a single bash script with no dependencies beyond
+.BR bash (1),
+.BR stty (1)
+and optionally
+.BR tput (1).
+It restores the terminal settings before exiting.
+.SH OPTIONS
+.TP
+.BI \-\-size " CxR"
+Use a fixed maze size in cells, given as columns \(mu rows, for example
+.BR "\-\-size 12x8" .
+The size is reduced if it does not fit the terminal, and boards are capped at
+40\(mu24 cells.
+.TP
+.BI \-\-preset " name"
+Starting size:
+.BR small " (9\(mu6, the default),"
+.B medium " (16\(mu11)"
+or
+.BR large " (25\(mu17)."
+Ignored when
+.B \-\-size
+is given.
+.TP
+.BI \-\-seed " n"
+Seed the random number generator so the same maze can be replayed. Reproducing
+a maze only works within one build of bash, because the sequence produced by
+bash's
+.B $RANDOM
+for a given seed differs between bash 3.2 and bash 5.
+.TP
+.B \-\-fog
+Start with fog of war enabled: only cells near the player are drawn.
+.TP
+.B \-\-ascii
+Use plain ASCII characters instead of box-drawing characters, for terminals or
+fonts without Unicode support.
+.TP
+.B \-\-no-color
+Disable ANSI colours. Colours are also disabled automatically when the output
+is not a terminal.
+.TP
+.B \-\-print-solution
+Print the keystrokes that solve level 1 for the chosen seed and exit. Useful
+for scripting and for self-tests.
+.TP
+.BR \-h ", " \-\-help
+Show a short usage message and exit.
+.TP
+.B \-\-version
+Show the version, copyright and licence notice and exit.
+.SH CONTROLS
+.TP
+.B arrow keys, W A S D
+Move the player.
+.TP
+.B h
+Show or hide a hint path to the exit.
+.TP
+.B r
+Regenerate the maze at the same level and reset the move counter.
+.TP
+.B n
+Skip to a fresh maze, one level on.
+.TP
+.B f
+Toggle fog of war.
+.TP
+.BR q ", " Esc ", " Ctrl\-C
+Quit. The final summary is printed on exit.
+.SH EXAMPLES
+Play a small maze:
+.PP
+.RS 4
+.EX
+maze
+.EE
+.RE
+.PP
+Play a fixed 20\(mu12 maze with fog of war:
+.PP
+.RS 4
+.EX
+maze \-\-size 20x12 \-\-fog
+.EE
+.RE
+.PP
+Replay the same maze twice:
+.PP
+.RS 4
+.EX
+maze \-\-seed 42
+.EE
+.RE
+.PP
+Print the solution to level 1 (the keys are w, a, s, d):
+.PP
+.RS 4
+.EX
+maze \-\-print-solution \-\-seed 42
+.EE
+.RE
+.SH "EXIT STATUS"
+.TP
+.B 0
+Normal exit, including
+.B \-\-help
+and
+.BR \-\-version .
+.TP
+.B 1
+An internal error, such as a maze with no path to the exit.
+.TP
+.B 2
+A usage error: an unknown option, an unknown preset, a malformed
+.B \-\-size
+or a non-numeric
+.BR \-\-seed .
+.TP
+.B 130
+Terminated by
+.BR SIGINT .
+.SH ENVIRONMENT
+.TP
+.B LANG ", " LC_ALL
+If the locale name mentions UTF-8, box-drawing characters are used; otherwise
+the game falls back to ASCII unless
+.B \-\-ascii
+is given.
+.TP
+.B TERM
+Used with
+.BR tput (1)
+to determine the terminal size when
+.BR stty (1)
+does not report a usable one.
+.TP
+.B TMPDIR
+Not used by the game itself; only its test suite writes there.
+.SH FILES
+.B maze
+writes no files and keeps no configuration. The best score is only remembered
+for the current session.
+.SH NOTES
+The game reads single keystrokes, so it requires a terminal: it puts the
+terminal into raw mode on start and restores the previous settings on exit,
+including after a signal. Keyboard input can also be piped in, which is how the
+test suite drives it.
+.SH AUTHOR
+Angelos Panagiotakis <agelospanagiotakis@gmail.com>
+.SH LICENSE
+Copyright \(co 2026 Angelos Panagiotakis.
+.PP
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+.PP
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU General Public License for more details.
+.PP
+On Debian systems the complete text of the GNU General Public License version 3
+can be found in
+.IR /usr/share/common\-licenses/GPL\-3 .
+.SH "SEE ALSO"
+.BR bash (1),
+.BR stty (1),
+.BR tput (1)

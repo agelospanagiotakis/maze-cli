@@ -1,0 +1,21 @@
+#!/bin/sh
+# autopkgtest: the installed program must run and must be able to win level 1.
+# The package installs into /usr/games, which is on the default login PATH but
+# not necessarily in a test runner's PATH, so resolve it explicitly.
+set -eu
+
+MAZE=$(command -v maze 2>/dev/null || echo /usr/games/maze)
+test -x "$MAZE"
+
+"$MAZE" --version
+"$MAZE" --help >/dev/null
+
+solution=$("$MAZE" --print-solution --seed 5 --ascii --no-color)
+test -n "$solution"
+
+output=$(printf '%sq' "$solution" | "$MAZE" --ascii --no-color --seed 5)
+printf '%s\n' "$output" | grep -q 'Level 1 cleared'
+
+# A custom board size must be honoured (the HUD reports the true board size).
+output=$(printf 'q' | "$MAZE" --ascii --no-color --size 5x4)
+printf '%s\n' "$output" | grep -q '(5x4)'

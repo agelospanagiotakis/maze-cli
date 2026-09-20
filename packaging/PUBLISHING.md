@@ -78,37 +78,58 @@ so keep `unstable` only for Debian uploads.
 This is what puts `maze` in Debian proper, from where it also flows into Ubuntu,
 and it is a social process as much as a technical one. The ordered version:
 
-**0. Prerequisites.** A GPG key (mentors and the archive require signed
-uploads), an account on <https://mentors.debian.net> with that key's fingerprint
-registered, and the tooling:
+**0. Create a GPG key.** Mentors and the archive require signed uploads, and the
+key's address must match the changelog's `Maintainer:` field.
 
 ```sh
-sudo apt-get install -y build-essential debhelper devscripts lintian fakeroot
+gpg --quick-generate-key "Angelos Panagiotakis <agelospanagiotakis@gmail.com>" rsa4096 sign 2y
+gpg --list-secret-keys --keyid-format=long     # note the fingerprint
 ```
 
-**1. File an ITP** (Intent To Package) against `wnpp`, from the *same address*
-as the changelog's `Maintainer:`. This is a public claim on the name, and
-without it a sponsor will not look at you. Ready-to-send text:
-`packaging/submission/itp-bug.txt`.
+**1. File an ITP** (Intent To Package) against `wnpp`. This is a public claim on
+the name, and without it a sponsor will not look at you. `reportbug` is a Debian
+tool, so from macOS send it as plain mail — ready-to-send body in
+`packaging/submission/itp-bug.txt`:
 
-```sh
-reportbug --attach=<(cat packaging/submission/itp-bug.txt) wnpp   # or mail it
+```
+To:      submit@bugs.debian.org
+Subject: ITP: maze -- simple auto-generated maze game for the terminal
+Body:    the contents of packaging/submission/itp-bug.txt
 ```
 
-**2. Close the ITP in the changelog**, which also clears the last lintian
-warning:
+Debbugs reads the pseudo-headers (`Package: wnpp`, `Severity: wishlist`,
+`Owner:`) at the top of the body. You get the bug number by return mail.
+
+**2. Register on <https://mentors.debian.net>** and add that GPG fingerprint to
+your profile there.
+
+**3. Close the ITP in the changelog**, which also clears the last lintian
+warning, and rebuild:
 
 ```sh
-dch --closes NNNNNN          # the bug number reportbug gave you
-```
-
-**3. Upload the signed source package to mentors:**
-
-```sh
+dch --closes NNNNNN          # the bug number from step 1
+./LINUX_DISTRIBUTION_CHECKS.sh
 make deb                     # builds maze_1.0.0-1.dsc + .debian.tar.xz + .orig
-debsign ../build/pkg/maze_1.0.0-1_source.changes
-dput mentors ../build/pkg/maze_1.0.0-1_source.changes   # stanza ships with dput
 ```
+
+**4. Sign and upload the source package.** `debsign` and `dput` are Linux tools,
+so on macOS do this inside a container (or on any Debian machine):
+
+```sh
+docker run --rm -it -v "$PWD":/w -w /w debian:stable bash
+# then, inside the container:
+apt-get update && apt-get install -y devscripts dpkg-dev make gnupg
+gpg --import /key.asc                        # the key exported on the host
+make deb
+debsign -k<KEYID> build/pkg/maze_1.0.0-1_source.changes
+dput mentors build/pkg/maze_1.0.0-1_source.changes
+```
+
+Note on the key: mounting `~/.gnupg` into a container running as root often
+fights with the host's `gpg-agent`. Exporting the secret key to a temporary
+file, importing it inside the container and deleting the file afterwards is
+more reliable — but it does put the private key on disk for that moment, so
+prefer a Linux box or VM if you have one, and never commit that file.
 
 Mentors runs lintian and other checks automatically and hosts the result at
 `https://mentors.debian.net/package/maze/`.

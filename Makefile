@@ -28,9 +28,12 @@ PKGDIR   := $(BUILD)/pkg
 SRCDIR   := $(PKGDIR)/$(NAME)-$(VERSION)
 ORIG     := $(PKGDIR)/$(NAME)_$(VERSION).orig.tar.gz
 
+# Container image used by `make check-linux`.
+IMAGE    ?= debian:stable-slim
+
 MANUAL   := maze.1
 
-.PHONY: all help test check check-linux install uninstall dist deb lint orig clean
+.PHONY: all help test check check-all check-linux install uninstall dist deb lint orig clean
 
 all: help
 
@@ -42,7 +45,8 @@ help:
 	  '  make uninstall [PREFIX=...] [DESTDIR=...]     remove them again' \
 	  '  make test                                     run the test suite' \
 	  '  make check                                    bash -n / shellcheck' \
-	  '  make check-linux                              verify packaging in Docker' \
+	  '  make check-all                                run every check (incl. Docker)' \
+	  '  make check-linux [IMAGE=debian:stable-slim]   verify packaging in Docker' \
 	  '  make dist                                     release tarball + SHA256' \
 	  '  make deb                                      .deb + source package (.dsc)' \
 	  '  make lint                                     lintian the built package' \
@@ -71,8 +75,11 @@ check:
 	    exit 1; \
 	fi; echo "versions agree"
 
+check-all:
+	bash LINUX_DISTRIBUTION_CHECKS.sh
+
 check-linux:
-	bash packaging/check-linux.sh
+	bash packaging/check-linux.sh "$(IMAGE)"
 
 # --------------------------------------------------------------------------- #
 # install / uninstall

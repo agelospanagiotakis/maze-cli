@@ -76,29 +76,71 @@ so keep `unstable` only for Debian uploads.
 ## Route 3 — Debian itself (weeks to months, needs a sponsor)
 
 This is what puts `maze` in Debian proper, from where it also flows into Ubuntu,
-and it is a social process as much as a technical one:
+and it is a social process as much as a technical one. The ordered version:
 
-1. **File an ITP** (Intent To Package) bug against `wnpp`:
-   `reportbug wnpp` → "ITP: maze -- simple auto-generated maze game for the terminal".
-   This is a public claim on the name; without it a sponsor will not look at you.
-2. **Register on <https://mentors.debian.net>** and upload the *signed* source
-   package there (`debsign` with your GPG key, then `dput mentors <changes>`).
-   Mentors checks your package automatically and hosts it for review.
-3. **Request sponsorship (RFS)**: take the RFS template from your Mentors package
-   page and file it as a bug against `sponsorship-requests`.
-4. **A Debian Developer reviews and sponsors** the upload. Expect review comments
-   about naming, the description, the man page, the copyright file and so on.
-5. **The upload goes to the NEW queue** where an archive admin checks the name,
-   the licence and file conflicts — this is where a clashing `/usr/bin/maze`
-   would be caught. Then it lands in `unstable`, migrates to `testing` after the
-   usual delay, and Ubuntu syncs it from Debian.
+**0. Prerequisites.** A GPG key (mentors and the archive require signed
+uploads), an account on <https://mentors.debian.net> with that key's fingerprint
+registered, and the tooling:
 
-Useful facts already handled in this tree: the package is `Architecture: all`,
-`Rules-Requires-Root: no`, has a DEP-5 `debian/copyright`, a `debian/watch`, an
-autopkgtest under `debian/tests/`, a section 6 manual page and a clean
-`lintian --pedantic`. The one remaining lintian warning is
-`initial-upload-closes-no-bugs`, which disappears as soon as the changelog
-closes the ITP bug.
+```sh
+sudo apt-get install -y build-essential debhelper devscripts lintian fakeroot
+```
+
+**1. File an ITP** (Intent To Package) against `wnpp`, from the *same address*
+as the changelog's `Maintainer:`. This is a public claim on the name, and
+without it a sponsor will not look at you. Ready-to-send text:
+`packaging/submission/itp-bug.txt`.
+
+```sh
+reportbug --attach=<(cat packaging/submission/itp-bug.txt) wnpp   # or mail it
+```
+
+**2. Close the ITP in the changelog**, which also clears the last lintian
+warning:
+
+```sh
+dch --closes NNNNNN          # the bug number reportbug gave you
+```
+
+**3. Upload the signed source package to mentors:**
+
+```sh
+make deb                     # builds maze_1.0.0-1.dsc + .debian.tar.xz + .orig
+debsign ../build/pkg/maze_1.0.0-1_source.changes
+dput mentors ../build/pkg/maze_1.0.0-1_source.changes   # stanza ships with dput
+```
+
+Mentors runs lintian and other checks automatically and hosts the result at
+`https://mentors.debian.net/package/maze/`.
+
+**4. Request sponsorship (RFS).** Take the template from your Mentors package
+page and file it against `sponsorship-requests`; a filled-in version is in
+`packaging/submission/rfs-bug.txt`. The [Debian Games
+team](https://wiki.debian.org/Games/Team) is a sensible place to ask, since this
+is a game.
+
+**5. A Debian Developer reviews and sponsors** the upload. Expect questions
+about the description, the man page, the copyright file, and about whether the
+game belongs in Debian at all. Answer them on the bug.
+
+**6. The upload goes to the NEW queue**, where an archive admin checks the name,
+the licence and file conflicts. Then it lands in `unstable`, migrates to
+`testing` after the usual delay, and Ubuntu syncs it from Debian.
+
+### What a reviewer will run, and what it says today
+
+Verified in a Debian 13 container (`make check-linux` runs all of it):
+
+| Check | Result |
+| --- | --- |
+| `dput`/archive name collision | no `maze` source or binary package in Debian; no package ships `/usr/games/maze` or `/usr/bin/maze` (checked against the `stable/main` contents index) |
+| `lintian --pedantic` | exit 0 — only `initial-upload-closes-no-bugs`, cleared by step 2 |
+| `Standards-Version` | 4.7.2, matching `debian-policy` 4.7.2.0 in Debian 13 |
+| `uscan --no-download` | watch file resolves `refs/tags/v1.0.0`; "package is up to date" |
+| `autopkgtest <deb> -- null` | `smoke PASS` |
+| `dpkg-buildpackage` | builds binary **and** source package; the upstream suite (58 checks) runs via `dh_auto_test` during the build |
+| `man --warnings` | no warnings |
+| `apt-get install` from a repo | installs `/usr/games/maze` + `man6/maze.6.gz` + docs; plays a level |
 
 Be aware of the policy reality: Debian is not a showcase for personal projects.
 A tiny game may be declined on the grounds that it does not need to be in
@@ -123,4 +165,12 @@ git tag -a v1.1.0 -m "maze 1.1.0" && git push origin v1.1.0
 make dist
 gh release create v1.1.0 --verify-tag --title "maze 1.1.0" \
   --notes-file NOTES.md build/maze-1.1.0.tar.gz build/maze-1.1.0.tar.gz.sha256
+
+# 5. for a Debian upload, sign and push to mentors
+debsign build/pkg/maze_1.1.0-1_source.changes
+dput mentors build/pkg/maze_1.1.0-1_source.changes
 ```
+
+Note the version dance: `maze.sh`'s `VERSION` and `debian/changelog`'s upstream
+version must always agree (the Makefile enforces this), and `debian/changelog`
+carries the `-1` Debian revision on top.

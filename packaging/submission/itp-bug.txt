@@ -1,0 +1,32 @@
+Package: wnpp
+Severity: wishlist
+X-Debbugs-Cc: agelospanagiotakis@gmail.com
+Owner: Angelos Panagiotakis <agelospanagiotakis@gmail.com>
+
+* Package name    : maze
+  Version         : 1.0.0
+  Upstream Author : Angelos Panagiotakis <agelospanagiotakis@gmail.com>
+* URL             : https://github.com/agelospanagiotakis/maze-cli
+* License         : GPL-3.0-or-later
+  Programming Lang: Bash
+  Description     : simple auto-generated maze game for the terminal
+
+ maze generates a perfect maze, draws it with box-drawing characters and
+ lets you walk a player from the top-left corner to the exit using the arrow
+ keys or WASD.
+
+ Each maze is produced with an iterative recursive backtracker, so there is
+ exactly one route from the start to the exit, the exit is always reachable
+ and there are no loops. The board starts small (9x6 cells) and grows by one
+ cell in each direction for every level cleared. Fog of war, a hint path and
+ a status line showing the level, board size, moves, elapsed time, best run
+ and a compass to the exit are built in.
+
+ The game is a single bash script, needs only bash, stty and optionally tput,
+ restores the terminal settings on exit (including after a signal), and takes
+ up about 25 kB. It is section 6 material: it is played in a terminal and the
+ package installs to /usr/games/maze with a maze(6) manual page.
+
+ I am the upstream author; the package is maintained in the same repository
+ under debian/. The source package is lintian-clean with --pedantic, ships a
+ DEP-5 copyright file, a watch file and an autopkgtest suite.

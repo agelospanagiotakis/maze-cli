@@ -39,10 +39,11 @@ echo "--- container ---"
 bash --version | head -1
 grep PRETTY_NAME /etc/os-release
 
-echo "installing build tooling (make, debhelper, devscripts, lintian, man-db)..."
+echo "installing build tooling (make, debhelper, devscripts, lintian, autopkgtest, man-db)..."
 apt-get update -qq >/dev/null
 apt-get install -y -qq -o Dpkg::Use-Pty=0 --no-install-recommends \
-    make build-essential debhelper devscripts lintian fakeroot man-db >/dev/null 2>&1
+    make build-essential debhelper devscripts lintian fakeroot man-db git \
+    autopkgtest debian-policy >/dev/null 2>&1
 
 WORK=/tmp/check
 REL=/tmp/rel
@@ -114,6 +115,27 @@ lintian --pedantic "$WORK"/build/pkg/*.changes || LINTIAN_RC=$?
 echo "lintian exit: $LINTIAN_RC"
 
 echo
+echo "--- 5b. policy compliance bits a Debian sponsor checks ---"
+echo "debian-policy in this image: $(dpkg-query -W -f='${Version}' debian-policy)"
+echo "our Standards-Version:       $(sed -n 's/^Standards-Version: //p' "$WORK"/debian/control)"
+echo "-- uscan (debian/watch must find upstream) --"
+# uscan exits non-zero both when a newer upstream exists and when the package
+# is already up to date, so judge it by what it says, not by its exit status.
+( cd "$WORK" && uscan --no-download --verbose >/tmp/uscan.log 2>&1 ) || true
+if grep -q 'uscan die:' /tmp/uscan.log; then
+    echo "   uscan FAILED:"
+    tail -12 /tmp/uscan.log | sed 's/^/   /'
+    exit 1
+elif grep -qiE 'is up to date|Newest version of' /tmp/uscan.log; then
+    grep -iE 'Newest version of|is up to date|matching refs' /tmp/uscan.log | sed 's/^/   /'
+    echo "   uscan: ok, watch file resolves upstream"
+else
+    echo "   uscan: unexpected output:"
+    tail -12 /tmp/uscan.log | sed 's/^/   /'
+    exit 1
+fi
+
+echo
 echo "--- 6. apt-get install from a local repository ---"
 APTREPO=/srv/aptrepo
 rm -rf "$APTREPO"; mkdir -p "$APTREPO"
@@ -136,8 +158,18 @@ echo "files shipped by the package:"
 dpkg -L maze | grep -v '^/$' | sed 's/^/  /'
 
 echo
-echo "--- 7. autopkgtest script against the installed package ---"
-bash "$WORK"/debian/tests/smoke && echo "autopkgtest smoke: passed"
+echo "--- 7. autopkgtest ---"
+echo "-- running debian/tests/smoke directly --"
+bash "$WORK"/debian/tests/smoke && echo "   smoke script: passed"
+echo "-- running it through autopkgtest (null runner), as a sponsor would --"
+if autopkgtest "$WORK"/build/pkg/*.deb -- null >/tmp/autopkgtest.log 2>&1; then
+    grep -E '^(smoke|tests?|.*)([[:space:]]+(PASS|FAIL))$|summary' /tmp/autopkgtest.log | sed 's/^/   /'
+    echo "   autopkgtest: passed"
+else
+    echo "   autopkgtest FAILED:"
+    tail -25 /tmp/autopkgtest.log | sed 's/^/   /'
+    exit 1
+fi
 
 echo
 echo "--- removing the package ---"

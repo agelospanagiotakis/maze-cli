@@ -1,0 +1,2 @@
+# build output from `make dist` / `make deb`
+build/

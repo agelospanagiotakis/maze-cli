@@ -1,0 +1,19 @@
+Package: maze
+Version: @VERSION@
+Architecture: all
+Maintainer: Angelos Panagiotakis
+Installed-Size: 32
+Section: games
+Priority: optional
+Depends: bash (>= 3.2)
+Homepage: https://www.gnu.org/licenses/gpl-3.0.html
+Description: simple auto-generated maze game for the terminal
+ maze draws a freshly generated perfect maze in the terminal and lets you
+ walk it with the arrow keys or WASD. Boards start small and grow one cell
+ per direction each level; fog of war, hints, and a live HUD with moves,
+ elapsed time and your best run are built in.
+ .
+ It is a single bash script with no dependencies beyond bash itself.
+ .
+ Copyright (C) 2026 Angelos Panagiotakis. Licensed under the GNU General
+ Public License, version 3 or later. There is NO WARRANTY.

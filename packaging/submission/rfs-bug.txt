@@ -27,7 +27,7 @@ Alternatively, you can download the package with 'dget' using this command:
 
 Changes since the last upload:
 
- * Initial release. (Closes: #ITP_BUG_NUMBER)
+ * Initial release. (Closes: #1148567)
 
 Notes for the reviewer:
 

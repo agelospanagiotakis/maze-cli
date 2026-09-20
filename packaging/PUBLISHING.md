@@ -109,21 +109,32 @@ warning, and rebuild:
 ```sh
 dch --closes NNNNNN          # the bug number from step 1
 ./LINUX_DISTRIBUTION_CHECKS.sh
-make deb                     # builds maze_1.0.0-1.dsc + .debian.tar.xz + .orig
+make source                  # source-only upload set: .dsc + .debian.tar.xz + .orig
 ```
 
 **4. Sign and upload the source package.** `debsign` and `dput` are Linux tools,
 so on macOS do this inside a container (or on any Debian machine):
 
 ```sh
-docker run --rm -it -v "$PWD":/w -w /w debian:stable bash
+# on the host: export the key you registered with mentors (fingerprint in step 0)
+gpg --export-secret-keys --armor <FINGERPRINT> > /tmp/maze-key.asc
+
+docker run --rm -it -v "$PWD":/w -v /tmp/maze-key.asc:/key.asc:ro -w /w debian:stable bash
 # then, inside the container:
-apt-get update && apt-get install -y devscripts dpkg-dev make gnupg
+apt-get update && apt-get install -y devscripts dpkg-dev make gnupg pinentry-curses
 gpg --import /key.asc                        # the key exported on the host
-make deb
-debsign -k<KEYID> build/pkg/maze_1.0.0-1_source.changes
+make source                                  # source-only: maze_1.0.0-1_source.changes
+debsign -k<FINGERPRINT> build/pkg/maze_1.0.0-1_source.changes
 dput mentors build/pkg/maze_1.0.0-1_source.changes
 ```
+
+Use `make source`, not `make deb`. `make deb` builds binary **and** source, which
+names the upload `maze_1.0.0-1_<arch>.changes` and drags a locally built `.deb`
+along with it. Mentors is a *source* repository and builds the binary itself, so
+the file you sign and upload is `..._source.changes`.
+
+Pass the full fingerprint to `debsign`, not the 16-character key id: with a key
+id it prints "long key IDs are discouraged".
 
 Note on the key: mounting `~/.gnupg` into a container running as root often
 fights with the host's `gpg-agent`. Exporting the secret key to a temporary
@@ -133,6 +144,18 @@ prefer a Linux box or VM if you have one, and never commit that file.
 
 Mentors runs lintian and other checks automatically and hosts the result at
 `https://mentors.debian.net/package/maze/`.
+
+Before uploading, publish the public half of your key so that mentors and any
+sponsor can verify the signature:
+
+```sh
+gpg --keyserver hkps://keys.openpgp.org --send-keys <FINGERPRINT>
+gpg --keyserver hkps://keyserver.ubuntu.com --send-keys <FINGERPRINT>
+```
+
+`keys.openpgp.org` mails you a confirmation link and only publishes the uid once
+you click it; `keyserver.ubuntu.com` publishes immediately and cannot retract,
+so send it deliberately. Uploading to both means a verifier finds you either way.
 
 **4. Request sponsorship (RFS).** Take the template from your Mentors package
 page and file it against `sponsorship-requests`; a filled-in version is in
@@ -179,7 +202,7 @@ make check
 
 # 3. full verification, including the Debian packaging path
 ./LINUX_DISTRIBUTION_CHECKS.sh      # runs: make check, make test, make check-linux
-make deb && make lint
+make source && make lint     # source upload set + lintian
 
 # 4. tag and publish the release with the tarball and checksum
 git tag -a v1.1.0 -m "maze 1.1.0" && git push origin v1.1.0
@@ -188,7 +211,7 @@ gh release create v1.1.0 --verify-tag --title "maze 1.1.0" \
   --notes-file NOTES.md build/maze-1.1.0.tar.gz build/maze-1.1.0.tar.gz.sha256
 
 # 5. for a Debian upload, sign and push to mentors
-debsign build/pkg/maze_1.1.0-1_source.changes
+debsign -k<FINGERPRINT> build/pkg/maze_1.1.0-1_source.changes
 dput mentors build/pkg/maze_1.1.0-1_source.changes
 ```
 

@@ -29,4 +29,9 @@ Owner: Angelos Panagiotakis <agelospanagiotakis@gmail.com>
 
  I am the upstream author; the package is maintained in the same repository
  under debian/. The source package is lintian-clean with --pedantic, ships a
- DEP-5 copyright file, a watch file and an autopkgtest suite.
+ DEP-5 copyright file, a watch file and an autopkgtest suite, and builds both
+ the binary and the source package with no special tooling.
+
+ It is a small, self-contained game in the tradition of the terminal games
+ Debian already ships, and I am willing to maintain it long-term, on my own or
+ under the Games team's umbrella.

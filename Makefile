@@ -33,7 +33,7 @@ IMAGE    ?= debian:stable-slim
 
 MANUAL   := maze.1
 
-.PHONY: all help test check check-all check-linux install uninstall dist deb lint orig clean
+.PHONY: all help test check check-all check-linux install uninstall dist deb source lint orig clean
 
 all: help
 
@@ -49,6 +49,7 @@ help:
 	  '  make check-linux [IMAGE=debian:stable-slim]   verify packaging in Docker' \
 	  '  make dist                                     release tarball + SHA256' \
 	  '  make deb                                      .deb + source package (.dsc)' \
+	  '  make source                                   source-only upload (.changes)' \
 	  '  make lint                                     lintian the built package' \
 	  '  make clean                                    remove build/'
 
@@ -150,6 +151,30 @@ deb:
 	@echo
 	@echo "artifacts in $(PKGDIR):"
 	@ls -1 "$(PKGDIR)"/*.deb "$(PKGDIR)"/*.dsc "$(PKGDIR)"/*.changes 2>/dev/null || true
+
+# Source-only build: what gets uploaded to mentors and to the Debian archive,
+# which build the binary themselves. Produces maze_<ver>_source.changes, the
+# file debsign signs and dput sends. -sa includes the orig tarball, required
+# for a first upload.
+source:
+	@command -v dpkg-buildpackage >/dev/null 2>&1 || { \
+	    echo "dpkg-buildpackage not found. Install the tooling first:" >&2; \
+	    echo "  sudo apt-get install -y build-essential debhelper devscripts lintian" >&2; \
+	    exit 1; }
+	@first=$$(sed -n '1s/.*(\(.*\)).*/\1/p' debian/changelog); \
+	if [ "$$first" != "$(DEBVERSION)" ]; then \
+	    echo "ERROR: debian/changelog says $$first but maze.sh says $(DEBVERSION)" >&2; \
+	    exit 1; \
+	fi
+	$(MAKE) orig
+	cp -a debian "$(SRCDIR)/debian"
+	cd "$(SRCDIR)" && dpkg-buildpackage -S -sa -us -uc
+	@echo
+	@echo "source upload artifacts in $(PKGDIR):"
+	@ls -1 "$(PKGDIR)"/*_source.changes "$(PKGDIR)"/*.dsc "$(PKGDIR)"/*.debian.tar.* "$(PKGDIR)"/*.orig.tar.* 2>/dev/null || true
+	@echo
+	@echo "next: debsign -k<FINGERPRINT> $(PKGDIR)/$(NAME)_$(DEBVERSION)_source.changes"
+	@echo "      dput mentors $(PKGDIR)/$(NAME)_$(DEBVERSION)_source.changes"
 
 lint:
 	@command -v lintian >/dev/null 2>&1 || { \

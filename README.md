@@ -37,12 +37,26 @@ Requires a terminal (a TTY) and `bash` 3.2 or newer. It starts **small** — a
 9x6 grid of cells — and the maze grows by one cell in each direction every
 level.
 
-## Installing on Linux
+## Install
 
-The whole program is one bash script, so "distributing" it is mostly a matter
-of putting the file somewhere on `PATH` under the name `maze`.
+**Debian and Ubuntu — from the project's own apt repository:**
 
-**1. Straight from GitHub** — nothing to build, no clone:
+```sh
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://agelospanagiotakis.github.io/maze-cli/maze.gpg \
+    | sudo gpg --dearmor -o /etc/apt/keyrings/maze.gpg
+echo "deb [signed-by=/etc/apt/keyrings/maze.gpg] https://agelospanagiotakis.github.io/maze-cli stable main" \
+    | sudo tee /etc/apt/sources.list.d/maze.list
+sudo apt-get update
+sudo apt-get install maze
+```
+
+That installs `/usr/games/maze` and `maze(6)`, and `apt upgrade` keeps it
+current. The repository is signed: the `signed-by=` keyring is what makes apt
+trust it, and apt will refuse the repository outright if the signature does not
+verify — so keep the first two commands together.
+
+**Anything else — one file, no build, no clone:**
 
 ```sh
 mkdir -p ~/.local/bin
@@ -53,17 +67,21 @@ maze                                   # ~/.local/bin must be on your PATH
 ```
 
 `curl -fsSL` fails loudly on HTTP errors rather than saving an error page, so a
-bad download cannot quietly become a broken `maze`. Prefer a pinned, verifiable
-download? Use the release tarball (option 3) and check its SHA256.
+bad download cannot quietly become a broken `maze`.
 
-**2. Straight from the source tree** — no build step at all:
+## Installing on Linux, in more detail
+
+The whole program is one bash script, so "distributing" it is mostly a matter
+of putting the file somewhere on `PATH` under the name `maze`.
+
+**1. From the source tree** — no build step at all:
 
 ```sh
 sudo install -Dm755 maze.sh /usr/local/bin/maze   # or: install -Dm755 maze.sh ~/.local/bin/maze
 maze
 ```
 
-**3. From the release tarball** (includes `LICENSE`, tests and the Makefile):
+**2. From the release tarball** (includes `LICENSE`, tests and the Makefile):
 
 ```sh
 # Either build it yourself:
@@ -79,13 +97,13 @@ make uninstall                             # PREFIX=$HOME/.local also works
 `DESTDIR` is honoured for staged installs, so packagers can do
 `make install DESTDIR=$pkgdir PREFIX=/usr`.
 
-**4. As a Debian/Ubuntu package:**
+**3. Build your own package:**
 
 ```sh
-sudo apt-get install -y build-essential debhelper devscripts lintian
+sudo apt-get install -y build-essential debhelper devscripts dput lintian
 make deb                                   # .deb + Debian source package (.dsc)
 make lint                                  # lintian --pedantic
-sudo apt-get install -y ./build/pkg/maze_1.0.0-1_all.deb
+sudo apt-get install -y ./build/pkg/maze_1.0.0-3_all.deb
 ```
 
 The package installs into `/usr/games` with a section 6 manual page, following
@@ -93,8 +111,8 @@ the Debian convention for games; `/usr/games` is on the default login `PATH`.
 `debian/` is a complete, lintian-clean source package, so the same tree can be
 uploaded to a PPA or to Debian itself.
 
-**Publishing it for `apt-get` users** — your own apt repository, an Ubuntu PPA,
-or getting into Debian proper — is covered step by step in
+**Publishing it for `apt-get` users** — the GitHub Pages repository above, an
+Ubuntu PPA, or getting into Debian proper — is covered step by step in
 [`packaging/PUBLISHING.md`](packaging/PUBLISHING.md), including what each route
 costs in time and review. `make check-linux` proves the whole packaging path in
 a container: build, lintian, a local apt repo, and `apt-get install maze`.

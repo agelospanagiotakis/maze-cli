@@ -3,16 +3,26 @@
 `debian/` contains a complete, lintian-clean Debian source package. This file
 explains how to get it in front of users, and what each route actually costs.
 
-Everything below assumes the tooling:
+Everything below runs inside a Debian toolchain container. Build that image
+once — `packaging/Dockerfile` carries debhelper, devscripts, dput, lintian,
+gnupg, git and friends — and every later container starts instantly instead of
+reinstalling a hundred packages:
 
 ```sh
-sudo apt-get install -y build-essential debhelper devscripts lintian fakeroot
+make docker-image      # once
+packaging/devenv.sh    # a shell with the toolchain, repo mounted at /w
+```
+
+On a Debian or Ubuntu host you can skip all of that and just install the tools:
+
+```sh
+sudo apt-get install -y build-essential debhelper devscripts dput lintian fakeroot
 ```
 
 ## Build and check the package
 
 ```sh
-make deb      # builds ../build/pkg/maze_1.0.0-1_all.deb + .dsc + .changes
+make deb      # build/pkg/maze_1.0.0-3_all.deb + .dsc + .changes
 make lint     # lintian --pedantic over the .changes
 ```
 
@@ -20,32 +30,59 @@ make lint     # lintian --pedantic over the .changes
 `.debian.tar.xz`) as well as the `.deb`, because every repository — Debian, a
 PPA, or your own — uploads the source package and builds the binary from it.
 
-## Route 1 — your own apt repository (hours, full control)
+## Route 1 — your own apt repository on GitHub Pages (hours, full control)
 
-Nobody has to approve anything and users still type `apt install maze`.
+Nobody has to approve anything and users still type `apt install maze`. The
+repository is built by `packaging/build-apt-repo.sh` and served from the
+`gh-pages` branch.
+
+**Build and sign it** — inside the toolchain container (`packaging/devenv.sh`),
+since the dpkg tooling is not on macOS. The key must be in that container's
+keyring (`gpg --import /key.asc`; the named volume keeps it):
 
 ```sh
-# On a host that serves HTTPS (GitHub Pages works):
-mkdir -p /srv/aptrepo && cp build/pkg/*.deb /srv/aptrepo/
-cd /srv/aptrepo
-dpkg-scanpackages -m . /dev/null > Packages
-gzip -kf Packages
+make apt-repo GPG_KEY=B1BA023B35947F8DD1A21EBD952F2FF96C4DE741
 ```
 
-Then on the user's machine:
+That writes `build/aptrepo/` and asks for your passphrase once, to sign
+`dists/stable/InRelease` and `Release.gpg`.
+
+**Publish it** — on the host, where your git credentials live (the container has
+no SSH key):
 
 ```sh
-echo "deb [trusted=yes] https://example.org/aptrepo ./" | sudo tee /etc/apt/sources.list.d/maze.list
+make apt-publish
+```
+
+This force-pushes the tree to an orphan `gh-pages` branch. Then enable Pages
+once:
+
+```sh
+gh api --method POST repos/agelospanagiotakis/maze-cli/pages \
+    -f 'source[branch]=gh-pages' -f 'source[path]=/'
+# if Pages already exists, use --method PUT instead of POST
+```
+
+**Users then install with** (signed — no `[trusted=yes]` needed):
+
+```sh
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://agelospanagiotakis.github.io/maze-cli/maze.gpg \
+    | sudo gpg --dearmor -o /etc/apt/keyrings/maze.gpg
+echo "deb [signed-by=/etc/apt/keyrings/maze.gpg] https://agelospanagiotakis.github.io/maze-cli stable main" \
+    | sudo tee /etc/apt/sources.list.d/maze.list
 sudo apt-get update && sudo apt-get install maze
 ```
 
-`[trusted=yes]` skips signature checking. That is fine for a single maintainer
-over HTTPS but it is not what distributions or cautious users want — sign the
-repository instead (GPG key, `Release` file, `InRelease`, and users importing
-your key), or publish through a PPA (route 2), which does the signing for you.
+Skipping the key and writing `deb [trusted=yes] ...` also works, and the build
+prints both variants, but it disables exactly the protection that makes an apt
+repository trustworthy — prefer the signed form.
 
-`make check-linux` performs exactly this route inside a container: it builds the
-package, serves it from a local repo and installs it with `apt-get`.
+`make check-apt-repo` verifies this whole path in a container: it assembles and
+signs a repository, installs from it with verification **on**, proves apt
+*refuses* the same repository without the key (so the signature check is really
+enforced), checks the unsigned `[trusted=yes]` path, and exercises the
+`--publish-only` push against a local bare repository.
 
 ## Route 2 — Ubuntu PPA (days, the usual answer for "apt-get install")
 
@@ -113,25 +150,53 @@ make source                  # source-only upload set: .dsc + .debian.tar.xz + .
 ```
 
 **4. Sign and upload the source package.** `debsign` and `dput` are Linux tools,
-so on macOS do this inside a container (or on any Debian machine):
+so on macOS do this in the toolchain container. Build that image **once** and
+every later container starts instantly — no more reinstalling debhelper and
+friends on each attempt:
 
 ```sh
-# on the host: export the key you registered with mentors (fingerprint in step 0)
-gpg --export-secret-keys --armor <FINGERPRINT> > /tmp/maze-key.asc
+# once, on the host:
+gpg --export-secret-keys --armor B1BA023B35947F8DD1A21EBD952F2FF96C4DE741 > /tmp/maze-key.asc
 
-docker run --rm -it -v "$PWD":/w -v /tmp/maze-key.asc:/key.asc:ro -w /w debian:stable bash
-# then, inside the container:
-apt-get update && apt-get install -y devscripts dpkg-dev make gnupg pinentry-curses
-gpg --import /key.asc                        # the key exported on the host
-make source                                  # source-only: maze_1.0.0-1_source.changes
-debsign -k<FINGERPRINT> build/pkg/maze_1.0.0-1_source.changes
-dput mentors build/pkg/maze_1.0.0-1_source.changes
+# once (or let devenv.sh do it automatically):
+make docker-image
+
+# every time after that:
+packaging/devenv.sh
 ```
 
-Use `make source`, not `make deb`. `make deb` builds binary **and** source, which
-names the upload `maze_1.0.0-1_<arch>.changes` and drags a locally built `.deb`
-along with it. Mentors is a *source* repository and builds the binary itself, so
-the file you sign and upload is `..._source.changes`.
+`devenv.sh` mounts the repository at `/w` and keeps GnuPG in a named volume, and
+it gets the signing key in there for you: if the key file is missing it exports
+your secret key from the host keyring (asking for the passphrase once, on the
+host), and if the volume does not have the key yet it imports it. So the shell
+opens with the key already usable:
+
+```sh
+packaging/devenv.sh
+gpg --list-secret-keys                                  # already present
+packaging/sign-and-upload.sh B1BA023B35947F8DD1A21EBD952F2FF96C4DE741
+dput mentors build/pkg/maze_1.0.0-3_source.changes       # or by hand
+```
+
+If a container was started some other way (`docker run --rm -it ... debian:stable`)
+it has an empty keyring and `debsign` fails with `No secret key`. Either copy the
+key in, or just use `devenv.sh` next time:
+
+```sh
+gpg --export-secret-keys --armor B1BA023B35947F8DD1A21EBD952F2FF96C4DE741 > /tmp/maze-key.asc
+docker cp /tmp/maze-key.asc <container>:/key.asc         # on the host
+gpg --import /key.asc                                    # inside the container
+```
+
+Use `make source`, not `make deb`, for the mentors upload. `make deb` builds
+binary **and** source, which names the upload `maze_1.0.0-3_<arch>.changes` and
+drags a locally built `.deb` along with it. Mentors is a *source* repository and
+builds the binary itself, so the file you sign and upload is
+`..._source.changes`.
+
+Both `make deb` and `make source` rebuild `build/pkg` from scratch, so the other
+one's artifacts disappear when you switch. `make apt-repo` therefore depends on
+`make deb` and rebuilds the `.deb` if needed rather than failing.
 
 Pass the full fingerprint to `debsign`, not the 16-character key id: with a key
 id it prints "long key IDs are discouraged".
@@ -149,8 +214,8 @@ Before uploading, publish the public half of your key so that mentors and any
 sponsor can verify the signature:
 
 ```sh
-gpg --keyserver hkps://keys.openpgp.org --send-keys <FINGERPRINT>
-gpg --keyserver hkps://keyserver.ubuntu.com --send-keys <FINGERPRINT>
+gpg --keyserver hkps://keys.openpgp.org --send-keys B1BA023B35947F8DD1A21EBD952F2FF96C4DE741
+gpg --keyserver hkps://keyserver.ubuntu.com --send-keys B1BA023B35947F8DD1A21EBD952F2FF96C4DE741
 ```
 
 `keys.openpgp.org` mails you a confirmation link and only publishes the uid once
@@ -231,7 +296,7 @@ gh release create v1.1.0 --verify-tag --title "maze 1.1.0" \
   --notes-file NOTES.md build/maze-1.1.0.tar.gz build/maze-1.1.0.tar.gz.sha256
 
 # 5. for a Debian upload, sign and push to mentors
-debsign -k<FINGERPRINT> build/pkg/maze_1.1.0-1_source.changes
+debsign -kB1BA023B35947F8DD1A21EBD952F2FF96C4DE741 build/pkg/maze_1.1.0-1_source.changes
 dput mentors build/pkg/maze_1.1.0-1_source.changes
 ```
 

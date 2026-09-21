@@ -15,6 +15,9 @@
 #      installs and uninstalls it, builds the Debian source and binary packages,
 #      runs lintian --pedantic, uscan and autopkgtest, and installs the package
 #      from a local apt repository with apt-get.
+#   4. the published apt repository path          (make check-apt-repo), which
+#      assembles and signs a repository, installs from it with verification on,
+#      and proves apt refuses a repository it cannot verify.
 #
 # Exit status: 0 = everything passed, 1 = something failed,
 #              2 = incomplete (Docker unavailable, so step 3 could not run).
@@ -100,25 +103,32 @@ echo "image: $IMAGE"
 echo "quick: $([[ $QUICK == 1 ]] && echo 'yes (Docker step skipped)' || echo no)${OFF}"
 echo
 
-step "1/3 syntax and version consistency (make check)" \
+step "1/4 syntax and version consistency (make check)" \
      "$LOGDIR/01-check.log" \
      make check
 
-step "2/3 the game's own test suite (make test)" \
+step "2/4 the game's own test suite (make test)" \
      "$LOGDIR/02-test.log" \
      make test
 
 if (( QUICK )); then
-    skip "3/3 Linux distribution gate (Docker)" "--quick given"
+    skip "3/4 Linux distribution gate (Docker)" "--quick given"
 elif ! command -v docker >/dev/null 2>&1; then
-    skip "3/3 Linux distribution gate (Docker)" "docker is not installed"
+    skip "3/4 Linux distribution gate (Docker)" "docker is not installed"
 elif ! docker info >/dev/null 2>&1; then
-    skip "3/3 Linux distribution gate (Docker)" \
+    skip "3/4 Linux distribution gate (Docker)" \
          "the Docker daemon is not running - start Docker Desktop and re-run"
 else
-    step "3/3 Linux distribution gate (Docker, $IMAGE)" \
+    step "3/4 Linux distribution gate (Docker, $IMAGE)" \
          "$LOGDIR/03-linux-distribution.log" \
          make check-linux IMAGE="$IMAGE"
+
+    # The packaged .deb is also what the GitHub Pages apt repository serves, so
+    # verify that whole path too: assemble, sign, install, and prove apt refuses
+    # an unverifiable repository.
+    step "4/4 apt repository (Docker, $IMAGE)" \
+         "$LOGDIR/04-apt-repository.log" \
+         make check-apt-repo IMAGE="$IMAGE"
 fi
 
 echo

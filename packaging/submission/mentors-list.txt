@@ -3,7 +3,7 @@ Subject: RFS: maze/1.0.0-3 [ITP] -- simple auto-generated maze game for the term
 
 Hi,
 
-I am looking for a sponsor for my package "maze" (ITP: #1148567, RFS: #RFS_BUG).
+I am looking for a sponsor for my package "maze" (ITP: #1148567, RFS: #1148569).
 
  * Package name : maze
    Version      : 1.0.0-3
@@ -19,7 +19,7 @@ a maze(6) man page.
   dget -x https://mentors.debian.net/debian/pool/main/m/maze/maze_1.0.0-3.dsc
 
 Package page: https://mentors.debian.net/package/maze/
-RFS bug:      https://bugs.debian.org/RFS_BUG
+RFS bug:      https://bugs.debian.org/1148569
 
 It is lintian-clean with --pedantic (one pedantic tag remains, about debhelper
 compat 13, kept so the package also builds on stable), ships a DEP-5 copyright,

@@ -34,9 +34,13 @@ ORIG     := $(PKGDIR)/$(NAME)_$(VERSION).orig.tar.gz
 # Container image used by `make check-linux`.
 IMAGE    ?= debian:stable-slim
 
+# apt repository published on GitHub Pages (see packaging/PUBLISHING.md).
+APT_URL  ?= https://agelospanagiotakis.github.io/maze-cli
+GPG_KEY  ?=
+
 MANUAL   := maze.1
 
-.PHONY: all help test check check-all check-linux install uninstall dist deb source lint orig clean
+.PHONY: all help test check check-all check-linux check-apt-repo install uninstall dist deb source apt-repo apt-publish docker-image devenv lint orig clean
 
 all: help
 
@@ -50,9 +54,14 @@ help:
 	  '  make check                                    bash -n / shellcheck' \
 	  '  make check-all                                run every check (incl. Docker)' \
 	  '  make check-linux [IMAGE=debian:stable-slim]   verify packaging in Docker' \
+	  '  make check-apt-repo [IMAGE=...]               verify the apt repo in Docker' \
 	  '  make dist                                     release tarball + SHA256' \
 	  '  make deb                                      .deb + source package (.dsc)' \
 	  '  make source                                   source-only upload (.changes)' \
+	  '  make apt-repo [GPG_KEY=<fpr>]                 build the apt repository' \
+	  '  make apt-publish                              push it to gh-pages' \
+	  '  make docker-image                             build the packaging toolchain image' \
+	  '  make devenv                                   shell with that toolchain' \
 	  '  make lint                                     lintian the built package' \
 	  '  make clean                                    remove build/'
 
@@ -83,6 +92,36 @@ check-all:
 
 check-linux:
 	bash packaging/check-linux.sh "$(IMAGE)"
+
+check-apt-repo:
+	bash packaging/check-apt-repo.sh "$(IMAGE)"
+
+# --------------------------------------------------------------------------- #
+# apt repository for GitHub Pages
+#
+# Build (and optionally sign) in a Debian container, where dpkg tooling exists:
+#   make deb && make apt-repo GPG_KEY=<fingerprint>
+# Then publish where the git credentials live — on macOS that means this host,
+# not the container:
+#   make apt-publish
+# --------------------------------------------------------------------------- #
+
+# Depends on `deb` on purpose: `make source` (and `make deb`) rebuild build/pkg
+# from scratch, so the .deb may legitimately be missing when this runs.
+apt-repo: deb
+	bash packaging/build-apt-repo.sh --url "$(APT_URL)" \
+	    $(if $(GPG_KEY),--key "$(GPG_KEY)",)
+
+apt-publish:
+	bash packaging/build-apt-repo.sh --publish-only --url "$(APT_URL)" \
+	    --out "$(BUILD)/aptrepo"
+
+# Reusable packaging toolchain: build once, never reinstall in a container again.
+docker-image:
+	docker build -t maze-devtools:stable packaging/
+
+devenv:
+	bash packaging/devenv.sh
 
 # --------------------------------------------------------------------------- #
 # install / uninstall

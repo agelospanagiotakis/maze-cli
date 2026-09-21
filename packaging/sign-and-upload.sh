@@ -5,7 +5,7 @@
 # letting debsign fail with "No secret key".
 #
 # Usage (inside the container):
-#   packaging/sign-and-upload.sh <FINGERPRINT> [keyfile]
+#   packaging/sign-and-upload.sh B1BA023B35947F8DD1A21EBD952F2FF96C4DE741 [keyfile]
 #
 # The keyfile argument defaults to /key.asc and is imported if the keyring does
 # not already have the key.
@@ -15,7 +15,7 @@
 
 set -euo pipefail
 
-FPR="${1:?usage: sign-and-upload.sh <FINGERPRINT> [keyfile]}"
+FPR="${1:?usage: sign-and-upload.sh B1BA023B35947F8DD1A21EBD952F2FF96C4DE741 [keyfile]}"
 KEYFILE="${2:-/key.asc}"
 
 for tool in dpkg-buildpackage debsign dput gpg; do

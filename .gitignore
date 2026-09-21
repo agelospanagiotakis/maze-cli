@@ -1,2 +1,5 @@
 # build output from `make dist` / `make deb`
 build/
+
+# macOS Finder metadata
+.DS_Store

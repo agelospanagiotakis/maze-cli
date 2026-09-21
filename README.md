@@ -117,6 +117,10 @@ Ubuntu PPA, or getting into Debian proper — is covered step by step in
 costs in time and review. `make check-linux` proves the whole packaging path in
 a container: build, lintian, a local apt repo, and `apt-get install maze`.
 
+For the full story — how the source package and the signed repository were built
+from scratch, what a Debian reviewer checks, and every trap hit along the way —
+see [`packaging/BUILD-NOTES.md`](packaging/BUILD-NOTES.md).
+
 For RPM and other formats, point [nfpm](https://nfpm.goreleaser.com/) at the
 same file — a starting point:
 

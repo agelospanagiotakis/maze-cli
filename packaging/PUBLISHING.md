@@ -2,6 +2,8 @@
 
 `debian/` contains a complete, lintian-clean Debian source package. This file
 explains how to get it in front of users, and what each route actually costs.
+[`BUILD-NOTES.md`](BUILD-NOTES.md) is the companion write-up of how all of this
+was built and which traps were hit on the way.
 
 Everything below runs inside a Debian toolchain container. Build that image
 once — `packaging/Dockerfile` carries debhelper, devscripts, dput, lintian,

@@ -1,5 +1,8 @@
-maze (1.0.0-1) unstable; urgency=medium
+maze (1.0.0-3) unstable; urgency=medium
 
   * Initial release. (Closes: #1148567)
+  * Restore the Priority field in the source stanza: it is a recommended
+    field, and dropping it made lintian warn (recommended-field).
+  * Declare Standards-Version 4.7.4.1.
 
- -- Angelos Panagiotakis <agelospanagiotakis@gmail.com>  Mon, 21 Sep 2026 01:45:00 +0300
+ -- Angelos Panagiotakis <agelospanagiotakis@gmail.com>  Mon, 21 Sep 2026 03:35:00 +0300

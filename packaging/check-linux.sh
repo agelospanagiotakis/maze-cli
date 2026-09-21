@@ -111,7 +111,11 @@ dpkg-deb -I "$DEB" | sed -n '1,14p'
 echo
 echo "--- 5. lintian ---"
 LINTIAN_RC=0
-lintian --pedantic "$WORK"/build/pkg/*.changes || LINTIAN_RC=$?
+# --display-experimental mirrors what mentors.debian.net shows on the package
+# QA page (it lists X tags too); without it, tags mentors reports stay invisible
+# here. Note that mentors' lintian can still be newer than the one in this
+# image, so that QA page remains the final word.
+lintian --pedantic --display-experimental "$WORK"/build/pkg/*.changes || LINTIAN_RC=$?
 echo "lintian exit: $LINTIAN_RC"
 
 echo

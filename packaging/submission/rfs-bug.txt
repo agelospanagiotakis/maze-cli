@@ -7,7 +7,7 @@ Dear mentors,
 I am looking for a sponsor for my package "maze":
 
  * Package name     : maze
-   Version          : 1.0.0-1
+   Version          : 1.0.0-3
    Upstream contact : Angelos Panagiotakis <agelospanagiotakis@gmail.com>
  * URL              : https://github.com/agelospanagiotakis/maze-cli
  * License          : GPL-3.0-or-later
@@ -23,16 +23,19 @@ To access further information about this package, please visit the following URL
 
 Alternatively, you can download the package with 'dget' using this command:
 
-  dget -x https://mentors.debian.net/debian/pool/main/m/maze/maze_1.0.0-1.dsc
+  dget -x https://mentors.debian.net/debian/pool/main/m/maze/maze_1.0.0-3.dsc
 
 Changes since the last upload:
 
  * Initial release. (Closes: #1148567)
+ * Restore the Priority field in the source stanza: it is a recommended
+   field, and dropping it made lintian warn (recommended-field).
+ * Declare Standards-Version 4.7.4.1.
 
 Notes for the reviewer:
 
- * bash is the implementation language; the package is Architecture: all and
-   Rules-Requires-Root: no, so there is nothing to compile.
+ * bash is the implementation language; the package is Architecture: all, so
+   there is nothing to compile.
  * Testing: the upstream suite (58 checks, including a pseudo-terminal test of
    the arrow-key raw-mode path) runs during the build via dh_auto_test, and
    debian/tests/smoke covers the installed program under autopkgtest.

@@ -13,9 +13,12 @@
 #   make uninstall
 
 NAME     := maze
+# Upstream version lives in maze.sh; the Debian revision lives in the changelog,
+# so `dch` is what bumps it and nothing here has to be edited by hand.
 VERSION  := $(shell sed -n 's/^VERSION="\(.*\)"/\1/p' maze.sh)
-DEBREV   := 1
-DEBVERSION := $(VERSION)-$(DEBREV)
+DEBVERSION := $(shell sed -n '1s/.*(\(.*\)).*/\1/p' debian/changelog)
+# The changelog version minus its -N revision, i.e. the upstream part.
+DEB_UPSTREAM := $(shell printf '%s' '$(DEBVERSION)' | sed 's/-[^-]*$$//')
 DISTNAME := $(NAME)-$(VERSION)
 
 PREFIX   ?= /usr/local
@@ -68,13 +71,12 @@ check:
 	    bash -n maze.sh && echo "maze.sh: syntax ok"; \
 	    bash -n tests/smoke_test.sh && echo "tests/smoke_test.sh: syntax ok"; \
 	fi
-	@printf 'debian/changelog version: '; sed -n '1s/.*(\(.*\)).*/\1/p' debian/changelog
-	@printf 'maze.sh VERSION:          %s\n' "$(DEBVERSION)"
-	@first=$$(sed -n '1s/.*(\(.*\)).*/\1/p' debian/changelog); \
-	if [ "$$first" != "$(DEBVERSION)" ]; then \
-	    echo "ERROR: debian/changelog ($$first) and maze.sh ($(DEBVERSION)) disagree" >&2; \
+	@printf 'debian/changelog version: %s\n' "$(DEBVERSION)"
+	@printf 'maze.sh VERSION:          %s\n' "$(VERSION)"
+	@if [ "$(DEB_UPSTREAM)" != "$(VERSION)" ]; then \
+	    echo "ERROR: debian/changelog upstream ($(DEB_UPSTREAM)) and maze.sh VERSION ($(VERSION)) disagree" >&2; \
 	    exit 1; \
-	fi; echo "versions agree"
+	fi; echo "versions agree (Debian revision $(DEBVERSION))"
 
 check-all:
 	bash LINUX_DISTRIBUTION_CHECKS.sh
@@ -139,10 +141,8 @@ deb:
 	    echo "dpkg-buildpackage not found. Install the tooling first:" >&2; \
 	    echo "  sudo apt-get install -y build-essential debhelper devscripts lintian" >&2; \
 	    exit 1; }
-	@first=$$(sed -n '1s/.*(\(.*\)).*/\1/p' debian/changelog); \
-	if [ "$$first" != "$(DEBVERSION)" ]; then \
-	    echo "ERROR: debian/changelog says $$first but maze.sh says $(DEBVERSION)" >&2; \
-	    echo "       bump debian/changelog (dch -v $(DEBVERSION)) first" >&2; \
+	@if [ "$(DEB_UPSTREAM)" != "$(VERSION)" ]; then \
+	    echo "ERROR: changelog upstream $(DEB_UPSTREAM) != maze.sh VERSION $(VERSION)" >&2; \
 	    exit 1; \
 	fi
 	$(MAKE) orig
@@ -161,9 +161,8 @@ source:
 	    echo "dpkg-buildpackage not found. Install the tooling first:" >&2; \
 	    echo "  sudo apt-get install -y build-essential debhelper devscripts lintian" >&2; \
 	    exit 1; }
-	@first=$$(sed -n '1s/.*(\(.*\)).*/\1/p' debian/changelog); \
-	if [ "$$first" != "$(DEBVERSION)" ]; then \
-	    echo "ERROR: debian/changelog says $$first but maze.sh says $(DEBVERSION)" >&2; \
+	@if [ "$(DEB_UPSTREAM)" != "$(VERSION)" ]; then \
+	    echo "ERROR: changelog upstream $(DEB_UPSTREAM) != maze.sh VERSION $(VERSION)" >&2; \
 	    exit 1; \
 	fi
 	$(MAKE) orig

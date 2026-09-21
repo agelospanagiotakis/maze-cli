@@ -1,0 +1,33 @@
+To:      debian-mentors@lists.debian.org
+Subject: RFS: maze/1.0.0-3 [ITP] -- simple auto-generated maze game for the terminal
+
+Hi,
+
+I am looking for a sponsor for my package "maze" (ITP: #1148567, RFS: #RFS_BUG).
+
+ * Package name : maze
+   Version      : 1.0.0-3
+ * URL          : https://github.com/agelospanagiotakis/maze-cli
+ * License      : GPL-3.0-or-later
+   Section      : games
+
+maze is a small terminal game: it generates a perfect maze and you walk it from
+the top-left corner to the exit with the arrow keys. It is a single bash script,
+needs only bash, stty and optionally tput, and installs to /usr/games/maze with
+a maze(6) man page.
+
+  dget -x https://mentors.debian.net/debian/pool/main/m/maze/maze_1.0.0-3.dsc
+
+Package page: https://mentors.debian.net/package/maze/
+RFS bug:      https://bugs.debian.org/RFS_BUG
+
+It is lintian-clean with --pedantic (one pedantic tag remains, about debhelper
+compat 13, kept so the package also builds on stable), ships a DEP-5 copyright,
+a watch file and an autopkgtest suite, and the upstream test suite of 58 checks
+runs during the build via dh_auto_test.
+
+I am the upstream author and would be glad to maintain it, alone or together
+with the Games team.
+
+Thanks for your time,
+Angelos Panagiotakis

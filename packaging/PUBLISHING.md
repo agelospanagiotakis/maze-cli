@@ -173,18 +173,38 @@ the licence and file conflicts. Then it lands in `unstable`, migrates to
 
 ### What a reviewer will run, and what it says today
 
-Verified in a Debian 13 container (`make check-linux` runs all of it):
+> **The mentors QA page is the authority, not your container.** Two traps, both
+> hit in practice:
+>
+> * A **stable** container is the wrong yardstick — it ships `debian-policy`
+>   4.7.2.0 and debhelper 13, while unstable has 4.7.4.1 and 14. Validate with
+>   `./LINUX_DISTRIBUTION_CHECKS.sh --image debian:sid`.
+> * Even sid's lintian is **not identical to mentors'**. Mentors runs a newer
+>   lintian: it reported `W recommended-field ... Priority` for a control file
+>   that sid's lintian called `redundant-priority-optional-field`. When the two
+>   disagree, satisfy mentors — the sponsor reads that page.
+>
+> `packaging/check-linux.sh` passes `--display-experimental` so that X tags
+> mentors shows (`debian-watch-does-not-check-openpgp-signature`) also appear
+> locally instead of being invisible.
+
+Verified against **sid** (`debian-policy` 4.7.4.1, debhelper 14.5):
 
 | Check | Result |
 | --- | --- |
 | `dput`/archive name collision | no `maze` source or binary package in Debian; no package ships `/usr/games/maze` or `/usr/bin/maze` (checked against the `stable/main` contents index) |
-| `lintian --pedantic` | exit 0 — only `initial-upload-closes-no-bugs`, cleared by step 2 |
-| `Standards-Version` | 4.7.2, matching `debian-policy` 4.7.2.0 in Debian 13 |
+| `lintian --pedantic --display-experimental` | exit 0. Tags: `package-uses-old-debhelper-compat-version 13` (kept deliberately — stable and Ubuntu ship debhelper 13), `redundant-priority-optional-field`, `debian-watch-does-not-check-openpgp-signature`. The Priority field stays anyway, because mentors' newer lintian warns when it is missing |
+| `Standards-Version` | 4.7.4.1, matching sid's `debian-policy` |
 | `uscan --no-download` | watch file resolves `refs/tags/v1.0.0`; "package is up to date" |
 | `autopkgtest <deb> -- null` | `smoke PASS` |
 | `dpkg-buildpackage` | builds binary **and** source package; the upstream suite (58 checks) runs via `dh_auto_test` during the build |
 | `man --warnings` | no warnings |
 | `apt-get install` from a repo | installs `/usr/games/maze` + `man6/maze.6.gz` + docs; plays a level |
+
+The remaining `X` tag means `debian/watch` does not verify an upstream OpenPGP
+signature. It can only be cleared by signing release tags (`git tag -s`) and
+switching the watch file to `pgpmode=auto` from the next release onwards;
+`pgpmode=none` is correct while the existing tags are unsigned.
 
 Be aware of the policy reality: Debian is not a showcase for personal projects.
 A tiny game may be declined on the grounds that it does not need to be in

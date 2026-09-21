@@ -1,0 +1,28 @@
+Package: maze
+Version: 1.0.0-3
+Architecture: all
+Maintainer: Angelos Panagiotakis <agelospanagiotakis@gmail.com>
+Installed-Size: 44
+Depends: bash (>= 3.2)
+Filename: pool/main/m/maze/maze_1.0.0-3_all.deb
+Size: 16128
+MD5sum: 94b47644231498b4cdc945ed4cdfe17f
+SHA1: 0c2308adf82904b11f5546d13811cc0aa155ee26
+SHA256: d31ec89a5b4562c0efa05b39dbfc78ad1d661b742fa6dd64116255c3a190bf03
+Section: games
+Priority: optional
+Homepage: https://github.com/agelospanagiotakis/maze-cli
+Description: simple auto-generated maze game for the terminal
+ maze generates a perfect maze, draws it with box-drawing characters and
+ lets you walk a player from the top-left corner to the exit with the arrow
+ keys or WASD. Boards start small and grow by one cell in each direction for
+ every level cleared.
+ .
+ It uses a recursive backtracker, so there is exactly one route to the exit,
+ which is always reachable. Fog of war, a hint path and a status line with
+ moves, elapsed time, best run and a compass to the exit are built in.
+ .
+ The game is a single bash script requiring only bash, stty and optionally
+ tput. It restores the terminal settings before exiting, including after a
+ signal.
+

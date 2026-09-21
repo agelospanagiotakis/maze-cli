@@ -1,0 +1,43 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+Architectures: all
+Codename: stable
+Components: main
+Date: Mon, 21 Sep 2026 03:06:08 +0000
+Description: maze - terminal maze game
+Label: maze
+Origin: maze
+Suite: stable
+MD5Sum:
+ 06d421fe3785585bde18bf36b3c83cfa              169 Release
+ e6889f703045da737b9e3dae0e002d17             1166 main/binary-all/Packages
+ 429057b111df01e8e1e58ece6a1d12fa              749 main/binary-all/Packages.gz
+SHA1:
+ f9904cce0ddd346ccfc7e11845bc824f79696572              169 Release
+ 3ebfb0e8b21322a38182a1eea2caaa818d296ede             1166 main/binary-all/Packages
+ ea98368af8889514161a8889cd50b3fb740dbe80              749 main/binary-all/Packages.gz
+SHA256:
+ c42ac194f1cb95b84457252bcdbf2ed31d472122980f7f935060f4a868acb2c9              169 Release
+ db5bd3b9aa110785a78a26ec60bfe3d220f7e59b07ff00c3252a692dc9e30e00             1166 main/binary-all/Packages
+ 5b75575ad9f783706ab31974a1edfaee4946f2c7749c797611bd3d28e974cf7f              749 main/binary-all/Packages.gz
+SHA512:
+ 385593651121aa5bf9da2415d42ab3e7b0d6795969ed572919d65612796fd00ed2d4fdb6b41fc96b5f9c71a6f90f01a4e853625ab6cda5ddba29905d01990618              169 Release
+ cc68747f9bd2f3848ab82b27ad8883dcc70202025536281873b8b2581e706270d63a55994f6985120a9aa14dfd48694e48ae638dbaeda9e2e647f47cd2c6ce68             1166 main/binary-all/Packages
+ 765466ab38cb2c29cdc2f83fd1ae0be0afe9444bda4dd07890c865b9b9ad0816afb3f2370738e40cdc894547fd8b6d16e222622709d63a799d314596a18af7db              749 main/binary-all/Packages.gz
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCgAdFiEEsboCOzWUf43Roh69lS8v+WxN50EFAmqwnyUACgkQlS8v+WxN
+50FajxAAud2lAxIXvW/O9vy3Fxf9giPfloOsEdEBG9sBs6suV+QnhdQFaUO8n+85
+7oVTllplt9D+xWVa59t3YKOyhs7qXkO9p2/dFP5TWbNFc/G8ip99KTICYHt7zAxt
+jBMp2ljsUq3t3aEfJCs0pUcG1t+Q1ncIuZu0hLHkeueKcv0duUyhcymryx8UNH4d
+OGgWCf9nL1OSpsb++rZP9zYjED0VrjTyocuVlQpIvV/we5BDegp/wzy+3pnyd1er
+cB0NFyvpzXpMU3haXTMT77QXAHl7pkoUpafNhM0zxrpFFqQ1ggkmxgBKcfxO6qVl
+XKZ9utwNKWDJngFuESJPrnwRAWdkiTDp9Wax3qZP/pxrB6e3SltXbKFkYDhhzATZ
+6eEXqq1oqjEBkf+KZCyCGTnypQOA7ksgHCnePa9OuPwD0LVeon3cxgH0s7wQ9ily
+O6VqbNBkdViC5IkPSygtKJqcaY0/FxeOe08nDUHCrTOrTUocdSa0oqryxjL/X/AL
+MiFmjYXLHsBqRNowtiRohqIxL4fwIZMahbLCZ8WbyMVCSaeyYu7T9wFXSt9XY3Nz
+nsyXsmPVinz7M4JL4zL+8owTbw9NafclFii4hgChQQRJWMvhsxwYJvHuUvuSxC3n
+n6NNcdPzuy4ludketsh2L/7gP0A6IdKmNtJ1WWNuDRhAVYR8t+4=
+=TURh
+-----END PGP SIGNATURE-----

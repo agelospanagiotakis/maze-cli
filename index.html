@@ -1,0 +1,18 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>maze apt repository</title>
+<h1>maze apt repository</h1>
+<p>Debian and Ubuntu packages for <a href="https://github.com/agelospanagiotakis/maze-cli">maze</a>.</p>
+<h2>Install</h2>
+<pre>
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://agelospanagiotakis.github.io/maze-cli/maze.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/maze.gpg
+echo "deb [signed-by=/etc/apt/keyrings/maze.gpg] https://agelospanagiotakis.github.io/maze-cli stable main" | sudo tee /etc/apt/sources.list.d/maze.list
+sudo apt-get update
+sudo apt-get install maze
+</pre>
+<h2>Files</h2>
+<ul>
+<li><a href="dists/stable/Release">dists/stable/Release</a></li>
+<li><a href="pool/main/m/maze/">pool/main/m/maze/</a></li>
+</ul>
